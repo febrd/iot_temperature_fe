@@ -28,41 +28,44 @@ export function DatePickerWithRange({
     const limit = 10000;
     let hasMoreData = true;
 
-    while (hasMoreData) {
-      setIsLoading(true);
-      const response = await fetch(
-        `/date?start=${startDate}&end=${endDate}&limit=${limit}&offset=${offset}`
-      );
+    setIsLoading(true); // Mulai loading
 
-      if (!response.ok) {
-        console.error("Error fetching data");
-        setIsLoading(false);
-        return;
+    try {
+      while (hasMoreData) {
+        const response = await fetch(
+          `/date?start=${startDate}&end=${endDate}&limit=${limit}&offset=${offset}`
+        );
+
+        if (!response.ok) {
+          console.error("Error fetching data");
+          setIsLoading(false); // Set ke false jika error
+          return;
+        }
+
+        const data = await response.json();
+        console.log("Fetched data chunk:", data);
+
+        if (data.length < limit) {
+          hasMoreData = false; // Hentikan jika tidak ada data lagi
+        }
+
+        offset += limit;
       }
-
-      const data = await response.json();
-      console.log("Fetched data chunk:", data);
-
-
-      if (data.length < limit) {
-        hasMoreData = false;
-      }
-
-      offset += limit;
+    } catch (error) {
+      console.error("Fetch error:", error);
+    } finally {
+      setIsLoading(false); // Pastikan loading berhenti setelah selesai
     }
-
-    setIsLoading(false);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (date) {
       if (date.from && date.to) {
         const fromDate = format(date.from, "yyyy-MM-dd");
         const toDate = format(date.to, "yyyy-MM-dd");
         console.log("Fetching data for range:", fromDate, toDate);
 
-        fetchDataInChunks(fromDate, toDate);
-
+        await fetchDataInChunks(fromDate, toDate); // Tunggu sampai selesai
         const url = `/date?start=${fromDate}&end=${toDate}`;
         console.log("Redirecting to URL (range mode):", url);
         router.push(url);
@@ -70,14 +73,13 @@ export function DatePickerWithRange({
         const singleDate = format(date.from, "yyyy-MM-dd");
         console.log("Fetching data for single date:", singleDate);
 
-        fetchDataInChunks(singleDate, singleDate);
-
+        await fetchDataInChunks(singleDate, singleDate); // Tunggu sampai selesai
         const url = `/date?mode=single&date=${singleDate}`;
         console.log("Redirecting to URL (single mode):", url);
         router.push(url);
       }
 
-      setIsOpen(false);
+      setIsOpen(false); // Tutup popover setelah proses selesai
     }
   };
 
