@@ -28,7 +28,7 @@ export function DatePickerWithRange({
     const limit = 10000;
     let hasMoreData = true;
 
-    setIsLoading(true); // Mulai loading
+    setIsLoading(true); 
 
     try {
       while (hasMoreData) {
